@@ -54,7 +54,7 @@ struct MainView: View {
                     }
                 }
                 .padding()
-                .padding(.top, 40)
+                .padding(.top)
                 
                 Spacer()
                 
