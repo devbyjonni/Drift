@@ -109,6 +109,24 @@ struct MainView: View {
         .animation(.easeInOut(duration: 1.5), value: audioController.isPlaying)
     }
     
+    private var playButton: some View {
+        HStack(spacing: 40) {
+            Button(action: {
+                if audioController.isPlaying {
+                    audioController.stop()
+                } else {
+                    audioController.start()
+                }
+            }) {
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: Theme.Colors.textLight))
+                        .frame(width: 80, height: 80)
+                    
+                    Image(systemName: audioController.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.largeTitle)
+                        .foregroundColor(Color(hex: Theme.Colors.backgroundDark))
+                }
             }
         }
         .padding(.bottom, 60)
