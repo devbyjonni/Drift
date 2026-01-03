@@ -136,14 +136,15 @@ struct MainView: View {
         HStack(spacing: 8) {
             ForEach(BrainwaveState.allCases) { state in
                 Circle()
-                    .fill(state == selectedTab ? Color(hex: Theme.Colors.textLight) : Color(hex: Theme.Colors.textMuted).opacity(0.3))
+                    // Use textLight for both, just vary opacity for a cleaner look
+                    .fill(Color(hex: Theme.Colors.textLight).opacity(state == selectedTab ? 0.8 : 0.2))
                     .frame(width: 8, height: 8)
-                    .scaleEffect(state == selectedTab ? 1.2 : 1.0)
+                    .scaleEffect(state == selectedTab ? 1.0 : 0.8) // Subtle scale diff
                     .animation(.spring(), value: selectedTab)
             }
         }
-        // Fade out when playing (since swiping is disabled)
-        .opacity(audioController.isPlaying ? 0.3 : 1.0)
+        .opacity(audioController.isPlaying ? 0.0 : 1.0) // Hide completely when playing for cleaner look
+        .animation(.easeInOut, value: audioController.isPlaying)
         .padding(.bottom, 10)
     }
     
