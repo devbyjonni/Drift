@@ -16,10 +16,7 @@ struct MainView: View {
             // Atmospheric Visuals
             SpaceView(intensity: 0.8)
             
-            if audioController.rainVolume > 0 {
-                RainView(intensity: 0.8)
-                    .transition(.opacity)
-            }
+
             
             // Main Content
             VStack {
