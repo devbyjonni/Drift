@@ -1,33 +1,84 @@
 # Drift 🌊
 
-**Drift** is a minimalist brainwave entrainment application for iOS, designed to help you focus, relax, or sleep using scientifically tuned **Binaural Beats**.
+**A high-performance, real-time audio synthesis engine for focus and relaxation.**
 
-## Features
+Drift is a native iOS application that generates **Binaural Beats** and procedural atmospheric soundscapes in real-time. Unlike typical meditation apps that play pre-recorded MP3s, Drift synthesizes audio samples on the fly using `AVAudioSourceNode`, ensuring zero looping artifacts and minimal memory footprint.
 
-- **Real-Time Audio Engine**: Generates pure sine waves tailored to specific brainwave frequencies.
-- **Binaural Beats**: Uses a 200Hz carrier frequency to create audible "beat" tones for effective entrainment.
-    - **Delta (0.5 - 4 Hz)**: Deep Sleep
-    - **Theta (4 - 8 Hz)**: Meditation & Creativity
-    - **Alpha (8 - 12 Hz)**: Relaxation
-    - **Beta (12 - 30 Hz)**: Focus & Alertness
-- **Atmospheric Layers**:
-    - **Rain**: Gentle brown noise overlay.
-    - **Space**: Deep, pulsing ambient drone.
-- **Visual Entrainment**: Smooth, real-time sine wave visualization that syncs perfectly with the audio frequency.
-- **Minimalist Design**: A clean, distraction-free interface built with SwiftUI.
+---
 
-## Tech Stack
+## 🛠 Engineering Highlights
 
-- **Language**: Swift 5
-- **UI Framework**: SwiftUI (Canvas, TimelineView for 60fps animations)
-- **Audio Framework**: `AVAudioEngine`, `AVAudioSourceNode` (Real-time synthesis)
-- **Haptics**: `UIImpactFeedbackGenerator`
+This project showcases advanced iOS development capabilities, moving beyond standard UI/CRUD applications into low-level audio processing and high-performance graphics.
 
-## Requirements
+### 1. Real-Time Digital Signal Processing (DSP)
+- **Zero Samples**: No audio files are used for the main tones. All sound is mathematically generated.
+- **C-Interop**: Utilizes `UnsafeMutablePointer` and C-based audio rendering callbacks (`AVAudioSourceNodeRenderBlock`) for lock-free, high-performance audio generation on the real-time thread.
+- **Procedural Noise**: Implements a **Linear Congruential Generator (LCG)** to synthesize Brown and White noise procedurally, completely eliminating large audio assets.
 
-- iOS 17.0+
-- Xcode 15.0+
+### 2. Modern Swift 6 Concurrency
+- **Observation Framework**: Migrated from `Combine`/`ObservableObject` to the new Swift 6 `@Observable` macro for performant, fine-grained state tracking.
+- **Thread Safety**: strict isolation between the UI (Main Actor) and the high-priority Audio Thread.
 
-## License
+### 3. High-Performance SwiftUI
+- **Canvas Drawing**: The Wave visualization uses immediate-mode `Canvas` drawing rather than `Shape` paths for optimal performance.
+- **Animatable Protocol**: Custom conformance to `Animatable` enables smooth interpolation of strictly mathematical values (Frequency/Amplitude) during UI transitions.
+- **TimelineView**: decouples the animation loop from the update loop, ensuring silky smooth 60/120Hz rendering.
 
-This project is created by Jonni Akesson.
+---
+
+## 🏗 Tech Stack
+
+- **Language**: Swift 6
+- **UI**: SwiftUI (Canvas, TimelineView, matchedGeometryEffect)
+- **Audio**: `AVAudioEngine`, `AVAudioSourceNode`, `AVAudioMixerNode`
+- **State Management**: Swift Observation framework (`@Observable`, `@Bindable`)
+- **Architecture**: MVVM + Singleton Audio Controller
+- **Tools**: Xcode 16, Git
+
+---
+
+## 🧠 Technical Deep Dive: The Audio Engine
+
+The heart of Drift is the `AudioController`. Instead of playing files, it attaches a "Tap" to the audio engine using `AVAudioSourceNode`.
+
+```swift
+// Simplified logic of the Render Block
+sourceNode = AVAudioSourceNode { _, _, frameCount, _ -> OSStatus in
+    for frame in 0..<Int(frameCount) {
+        // 1. Calculate Sine Wave for Left/Right Ears
+        let valL = sin(phaseL)
+        let valR = sin(phaseR)
+        
+        // 2. Advance phases by different increments to create Binaural Beat
+        // Left: 200Hz | Right: 206Hz -> Result: 6Hz interference pattern (Theta Wave)
+        phaseL += incrementL
+        phaseR += incrementR
+        
+        // 3. Write directly to the output buffer
+        bufferL[frame] = valL
+        bufferR[frame] = valR
+    }
+    return noErr
+}
+```
+
+This approach allows for instantaneous frequency shifting and "glitch-free" transitions between different brainwave states.
+
+---
+
+## 📱 Features
+
+- **Dynamic Binaural Beats**:
+    - **Delta (2.0 Hz)**: Deep Sleep
+    - **Theta (6.0 Hz)**: Meditation
+    - **Alpha (10.0 Hz)**: Relaxation
+    - **Beta (20.0 Hz)**: Focus
+- **Audio Mixer**: Multitrack control for synthesis, rain (brown noise), and white noise layers.
+- **Visual Entrainment**: A math-driven sine wave animation that perfectly matches the audio frequency.
+
+---
+
+## 📜 License
+
+Created by **Jonni Akesson**.
+Open for educational use.
