@@ -82,9 +82,7 @@ struct MainView: View {
                 
                 WaveView(
                     frequency: visualFreq,
-                    amplitude: audioController.isPlaying ? 30 : 0, // Flatten to 0 when stopped
-                    speed: 2.0, // Constant speed prevents phase jumps during phase out
-                    color: Color(hex: Theme.Colors.primary)
+                    amplitude: audioController.isPlaying ? 30 : 0 // Flatten to 0 when stopped
                 )
                 .frame(height: 120)
                 .opacity(0.8)
