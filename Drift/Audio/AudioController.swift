@@ -256,16 +256,23 @@ class AudioController {
     func start() {
         if engine.isRunning { return }
         
-        // Reset Mixer Volumes (Anti-pop)
-        panningMixer.outputVolume = 0
-        updateVolumes()
+        // 1. Prepare for fade-in
+        // We fade the Main Mixer so ALL sounds (Rain, Noise, Tone) fade in together.
+        
+        // Ensure subsystems are ready (but silent due to mainMixer)
+        panningMixer.outputVolume = 1.0 
+        updateVolumes() // Sets Rain/Noise to their slider levels
+        
+        // Start silent
+        mainMixer.outputVolume = 0 
         
         do {
             try engine.start()
             isPlaying = true
             
-            // Smoothly fade in the main binaural tone
-            fade(node: panningMixer, target: 1.0, duration: 1.0)
+            // 2. Global Fade In
+            // Fade MainMixer from 0 -> MasterVolume
+            fade(node: mainMixer, target: masterVolume, duration: 2.0)
         } catch {
             print("Error starting engine: \(error)")
         }
@@ -273,8 +280,8 @@ class AudioController {
     
     func stop() {
         isPlaying = false
-        // Smooth fade out before hard stop
-        fade(node: panningMixer, target: 0.0, duration: 0.5) { [weak self] in
+        // 3. Global Fade Out
+        fade(node: mainMixer, target: 0.0, duration: 1.0) { [weak self] in
             self?.engine.stop()
             self?.engine.reset()
         }
