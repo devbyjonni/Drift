@@ -15,6 +15,10 @@ struct Theme {
         static let spaceBlue = "#1e293b" // Slate Blue
         static let nebulaPurple = "#4c1d95" // Deep Purple
         static let starlight = "#94a3b8" // Blue-ish Grey
+        
+        // Gradient Colors
+        static let deltaGradientMiddle = "#2c2a26"
+        static let thetaGradientMiddle = "#3d3a36"
     }
 
     struct Typography {

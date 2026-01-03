@@ -6,9 +6,9 @@ struct BackgroundView: View {
     var gradientColors: [Color] {
         switch mode {
         case .delta:
-            return [Color(hex: "#1c1b19"), Color(hex: "#2c2a26"), Color(hex: "#1c1b19")]
+            return [Color(hex: Theme.Colors.backgroundDark), Color(hex: Theme.Colors.deltaGradientMiddle), Color(hex: Theme.Colors.backgroundDark)]
         case .theta:
-            return [Color(hex: Theme.Colors.backgroundDark), Color(hex: "#3d3a36"), Color(hex: Theme.Colors.backgroundDark)]
+            return [Color(hex: Theme.Colors.backgroundDark), Color(hex: Theme.Colors.thetaGradientMiddle), Color(hex: Theme.Colors.backgroundDark)]
         case .alpha:
             // Entering Space: Deep Blue/Indigo
             return [
