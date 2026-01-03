@@ -82,8 +82,8 @@ struct MainView: View {
                 
                 WaveView(
                     frequency: visualFreq,
-                    amplitude: audioController.isPlaying ? 30 : 5,
-                    speed: audioController.isPlaying ? 2.0 : 0.5, // Scroll speed
+                    amplitude: audioController.isPlaying ? 30 : 0, // Flatten to 0 when stopped
+                    speed: audioController.isPlaying ? 2.0 : 0.5,
                     color: Color(hex: Theme.Colors.primary)
                 )
                 .frame(height: 120)
