@@ -41,24 +41,34 @@ struct Theme {
 }
 
 // MARK: - Color Hex Extension
-// Provides a convenient way to initialize SwiftUI Colors from Hex strings.
+// Use: Color(hex: "#FF0000")
 extension Color {
     init(hex: String) {
+        // 1. Clean the string (remove "#" and any spaces)
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        
+        // 2. Scan the string into a 64-bit integer
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
+        
+        // 3. Extract correct components based on length
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
+        case 3: // 12-bit RGB (e.g. "FFF")
+            // Expand 4-bits to 8-bits by multiplying by 17 (0xF -> 0xFF)
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
+        case 6: // 24-bit RGB (e.g. "FF0000")
+            // Bitwise shift (>>) to move bits to right, then Mask (&) to isolate last 8 bits
+            // R: Top 8 bits, G: Middle 8 bits, B: Bottom 8 bits
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
+        case 8: // 32-bit ARGB (e.g. "FFFF0000")
+            // Same logic, but with Alpha at top 8 bits
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
             (a, r, g, b) = (1, 1, 1, 0)
         }
 
+        // 4. Normalize to 0.0 - 1.0 (SwiftUI standard)
         self.init(
             .sRGB,
             red: Double(r) / 255,
