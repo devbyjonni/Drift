@@ -32,11 +32,6 @@ struct MainView: View {
                         Text("DRIFT")
                             .font(.caption)
                             .tracking(2)
-                        if audioController.isPlaying {
-                            Text(String(format: "%.1f Hz", audioController.frequency))
-                                .font(.caption2)
-                                .foregroundColor(Color(hex: Theme.Colors.primary))
-                        }
                     }
                     .foregroundColor(Color(hex: Theme.Colors.textMuted))
                     
