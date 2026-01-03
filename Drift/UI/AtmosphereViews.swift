@@ -1,32 +1,6 @@
 import SwiftUI
 
-struct RainView: View {
-    var intensity: Double // 0.0 to 1.0
-    
-    var body: some View {
-        Canvas { context, size in
-            let width = size.width
-            let height = size.height
-            
-            // Draw random rain drops
-            // In a real app complexity: use a TimelineView and animate drops falling
-            // For minimalist entrainment: static falling lines or simple animation is fine
-            // We'll use a predictable chaos for visualization
-            
-            for _ in 0..<Int(intensity * 100) {
-                let x = Double.random(in: 0...width)
-                let y = Double.random(in: 0...height)
-                let len = Double.random(in: 10...30)
-                
-                let path = Path { p in
-                    p.move(to: CGPoint(x: x, y: y))
-                    p.addLine(to: CGPoint(x: x, y: y + len))
-                }
-                context.stroke(path, with: .color(.white.opacity(0.1 + intensity * 0.2)), lineWidth: 1)
-            }
-        }
-    }
-}
+
 
 struct SpaceView: View {
     @State private var pulse: CGFloat = 1.0
