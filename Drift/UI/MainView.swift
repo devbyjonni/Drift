@@ -29,7 +29,7 @@ struct MainView: View {
                     
                     // Center: Title + Hz
                     VStack(spacing: 2) {
-                        Text("FREQUENCY PLAYER")
+                        Text("DRIFT")
                             .font(.caption)
                             .tracking(2)
                         if audioController.isPlaying {
