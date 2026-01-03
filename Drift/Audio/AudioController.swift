@@ -11,27 +11,33 @@ class AudioController: ObservableObject {
     private var sourceNode: AVAudioSourceNode!
     private let panningMixer = AVAudioMixerNode()
     
-    // Atmosphere
-    private var noiseNode: AVAudioSourceNode!
-    private let noiseMixer = AVAudioMixerNode()
+    // Atmosphere Nodes
+    private var rainNode: AVAudioSourceNode!
+    private let rainMixer = AVAudioMixerNode()
+    
+    private var whiteNoiseNode: AVAudioSourceNode!
+    private let whiteNoiseMixer = AVAudioMixerNode()
     
     // State
     @Published var isPlaying: Bool = false
-    @Published var atmosphereIntensity: Double = 0.0
-    @Published var isRaining: Bool = false
-    @Published var isSpace: Bool = false
+    @Published var frequency: Float = 6.0
     
-    // Parameters
-    var frequency: Float = 6.0 { // Default Theta
-        didSet {
-            // Smoothly update frequency (handled in block via pointer if needed, or atomic)
-            // For simple SourceNode, we can read this value directly if captured carefully,
-            // or use specific thread-safe patterns.
-            // For this implementation, we'll use a thread-safe atomic-like approach or simple locking
-            // if we needed sample-accurate automation, but for brainwaves, simple variable update is often "ok"
-            // if we filter it inside the render block.
-        }
+    // Volume State (0.0 - 1.0)
+    @Published var masterVolume: Float = 1.0 {
+        didSet { updateVolumes() }
     }
+    @Published var rainVolume: Float = 0.0 {
+        didSet { updateVolumes() }
+    }
+    @Published var whiteNoiseVolume: Float = 0.0 {
+        didSet { updateVolumes() }
+    }
+    
+    // Deprecated helpers for compatibility (Optional, if UI still uses them, but MainView is updated)
+    // We removed isRaining from MainView, so we can remove it here.
+
+    
+
     
     // LFO State
     private var lfoPhase: Float = 0.0
@@ -136,58 +142,80 @@ class AudioController: ObservableObject {
         engine.connect(sourceNode, to: panningMixer, format: format)
         engine.connect(panningMixer, to: mainMixer, format: format)
         
-        setupNoise(format: format)
+        // --- 2. Atmosphere Setup ---
+        setupAtmosphere(format: format)
         
         startLFO()
         engine.prepare()
+        
+        // Initial Volume
+        updateVolumes()
     }
     
-    private func setupNoise(format: AVAudioFormat) {
-        // Fast Pseudo-Random Number Generator (LCG)
-        // Avoids swift's Float.random(in:) overhead in the render thread
-        var state: UInt32 = 123456789
-        
+    private func setupAtmosphere(format: AVAudioFormat) {
+        // --- Rain (Brown Noise) ---
+        var lcgStateRain: UInt32 = 123456789
         var lastOut: Float = 0.0
         
-        noiseNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
+        rainNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
             let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
-            
             for frame in 0..<Int(frameCount) {
-                // LCG Algorithm: X_{n+1} = (aX_n + c) mod m
-                state = state &* 1664525 &+ 1013904223 // &* overload ignores overflow
-                
-                // Normalize to -1.0...1.0
-                // Divide by Max UInt32 (4294967295.0) -> 0...1 -> * 2 - 1 -> -1...1
-                let white = (Float(state) / 4294967295.0) * 2.0 - 1.0
-                
+                lcgStateRain = lcgStateRain &* 1664525 &+ 1013904223
+                let white = (Float(lcgStateRain) / 4294967295.0) * 2.0 - 1.0
                 var brown = (lastOut + (0.02 * white)) / 1.02
                 lastOut = brown
                 brown *= 3.5 
                 
                 for buffer in abl {
                     let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
-                    if frame < buf.count {
-                        buf[frame] = brown * 0.1 
-                    }
+                    if frame < buf.count { buf[frame] = brown * 0.1 }
                 }
             }
             return noErr
         }
         
-        engine.attach(noiseNode)
-        engine.attach(noiseMixer)
-        engine.connect(noiseNode, to: noiseMixer, format: format)
-        engine.connect(noiseMixer, to: mainMixer, format: format)
-        noiseMixer.volume = 0.0 
+        // --- White Noise ---
+        var lcgStateWhite: UInt32 = 987654321
+        
+        whiteNoiseNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
+            let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
+            for frame in 0..<Int(frameCount) {
+                lcgStateWhite = lcgStateWhite &* 1664525 &+ 1013904223
+                let white = (Float(lcgStateWhite) / 4294967295.0) * 2.0 - 1.0
+                
+                for buffer in abl {
+                    let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(buffer)
+                    if frame < buf.count { buf[frame] = white * 0.03 } 
+                }
+            }
+            return noErr
+        }
+        
+        engine.attach(rainNode)
+        engine.attach(rainMixer)
+        engine.connect(rainNode, to: rainMixer, format: format)
+        engine.connect(rainMixer, to: mainMixer, format: format)
+        
+        engine.attach(whiteNoiseNode)
+        engine.attach(whiteNoiseMixer)
+        engine.connect(whiteNoiseNode, to: whiteNoiseMixer, format: format)
+        engine.connect(whiteNoiseMixer, to: mainMixer, format: format)
+    }
+    
+    private func updateVolumes() {
+        // Master volume scales everything
+        mainMixer.outputVolume = masterVolume
+        
+        // Individual Channel Volumes
+        rainMixer.outputVolume = rainVolume
+        whiteNoiseMixer.outputVolume = whiteNoiseVolume
     }
     
     private var carrierPointer: UnsafeMutablePointer<Float>?
     private var phaseLPointer: UnsafeMutablePointer<Float>?
     private var phaseRPointer: UnsafeMutablePointer<Float>?
     
-    func setAtmosphereVolume(_ volume: Float) {
-        noiseMixer.volume = volume
-    }
+
     
     private var frequencyPointer: UnsafeMutablePointer<Float>?
     private var phasePointer: UnsafeMutablePointer<Float>? // Add this property
@@ -201,36 +229,22 @@ class AudioController: ObservableObject {
     func start() {
         if engine.isRunning { return }
         
-        // Prepare for fade in
-        panningMixer.outputVolume = 0
-        noiseMixer.outputVolume = 0 // Also fade noise if needed, but noiseMixer has its own volume control logic
-        // We'll trust setAtmosphereVolume handles target noise volume, but for master start/stop we fade panningMixer which carries tone
-        // Correction: Noise goes to noiseMixer -> mainMixer. Tone goes to panningMixer -> mainMixer.
-        // To fade EVERYTHING, we should fade mainMixer, but mainMixer outputVolume is often read-only or affects system.
-        // Better to fade individual mixers or connect them to a master node.
-        // Current Graph: 
-        // Tone -> PanningMixer -> MainMixer
-        // Noise -> NoiseMixer -> MainMixer
-        // So we must fade PanningMixer AND NoiseMixer, or insert a MasterMixer.
-        // For simplicity: We will fade PanningMixer (Tone) and NoiseMixer (Atmosphere).
+        // Mute Tone Mixer before starting to prevent pop
         panningMixer.outputVolume = 0
         
-        // Restore noise volume if it was active? 
-        // Current logic: noiseMixer.volume is used for intensity. 
-        // We shouldn't mess with noiseMixer.volume property if it represents user setting.
-        // BUT `start/stop` usually implies master switch.
-        // Let's fade `mainMixer.outputVolume`? No, mainMixer corresponds to the hardware output often.
-        // Let's assume the user hears "Pop" from the Tone mostly.
+        // Ensure atmospheric mixers are at correct volume
+        rainMixer.outputVolume = rainVolume
+        whiteNoiseMixer.outputVolume = whiteNoiseVolume
+        
+        // Main Mixer follows master
+        mainMixer.outputVolume = masterVolume
         
         do {
             try engine.start()
             isPlaying = true
             
-            // Fade In
+            // Fade In Tone
             fade(node: panningMixer, target: 1.0, duration: 1.0)
-            // Note: Noise mixer volume is dynamic based on "Rain" toggle. 
-            // If rain is on, it might pop. 
-            // Let's just fix the Tone pop first as requested ("play and stop").
         } catch {
             print("Error starting engine: \(error)")
         }

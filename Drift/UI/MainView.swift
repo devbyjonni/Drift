@@ -3,6 +3,7 @@ import SwiftUI
 struct MainView: View {
     @State private var selectedTab: BrainwaveState = .theta
     @StateObject private var audioController = AudioController.shared
+    @State private var showMixer: Bool = false
     
     // UI State for animations
     
@@ -15,7 +16,7 @@ struct MainView: View {
             // Atmospheric Visuals
             SpaceView(intensity: 0.8)
             
-            if audioController.isRaining {
+            if audioController.rainVolume > 0 {
                 RainView(intensity: 0.8)
                     .transition(.opacity)
             }
@@ -37,20 +38,18 @@ struct MainView: View {
                     
                     Spacer()
                     
-                    // Right: Filter Menu (moved from bottom)
-                    Menu {
-                        Button(action: {
-                            withAnimation {
-                                audioController.isRaining.toggle()
-                                audioController.setAtmosphereVolume(audioController.isRaining ? 0.3 : 0.0)
-                            }
-                        }) {
-                            Label("Rain", systemImage: audioController.isRaining ? "checkmark" : "cloud.rain")
-                        }
-                    } label: {
+                    // Right: Mixer Button
+                    Button(action: {
+                        showMixer = true
+                    }) {
                         Image(systemName: "slider.horizontal.3")
                             .font(.title3)
                             .foregroundColor(Color(hex: Theme.Colors.textMuted))
+                    }
+                    .sheet(isPresented: $showMixer) {
+                        MixerView()
+                            .presentationDetents([.medium, .large])
+                            .presentationDragIndicator(.visible)
                     }
                 }
                 .padding()
