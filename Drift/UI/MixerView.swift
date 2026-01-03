@@ -12,7 +12,7 @@ struct MixerView: View {
                 // Header
                 HStack {
                     ZStack {
-                        // Title to center
+                        // Title
                         Text("Mixer")
                             .font(.system(size: 16, weight: .medium, design: .rounded))
                             .tracking(2)
@@ -25,7 +25,9 @@ struct MixerView: View {
                                     .font(.system(size: 20, weight: .light))
                                     .foregroundColor(Color(hex: Theme.Colors.textLight).opacity(0.8))
                             }
+                            
                             Spacer()
+                            
                             Button(action: {
                                 withAnimation {
                                     audioController.rainVolume = 0

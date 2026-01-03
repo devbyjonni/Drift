@@ -1,7 +1,5 @@
 import SwiftUI
 
-
-
 struct SpaceView: View {
     @State private var pulse: CGFloat = 1.0
     var intensity: Double // 0.0 to 1.0
@@ -19,7 +17,6 @@ struct SpaceView: View {
                     pulse = 1.5
                 }
             }
-            
             // Abstract Stars
             GeometryReader { geo in
                 ForEach(0..<Int(20 * intensity), id: \.self) { _ in

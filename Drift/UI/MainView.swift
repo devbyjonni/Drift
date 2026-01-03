@@ -6,8 +6,6 @@ struct MainView: View {
     @State private var showMixer: Bool = false
     
     // UI State for animations
-    
-    
     var body: some View {
         ZStack {
             BackgroundView(mode: selectedTab)
@@ -16,16 +14,12 @@ struct MainView: View {
             // Atmospheric Visuals
             SpaceView(intensity: 0.8)
             
-
-            
             // Main Content
             VStack {
                 // Header
                 HStack {
-                    // Left: Empty/Spacer (removed chevron)
                     Spacer()
                     
-                    // Center: Title + Hz
                     VStack(spacing: 2) {
                         Text("DRIFT")
                             .font(.caption)
@@ -35,7 +29,6 @@ struct MainView: View {
                     
                     Spacer()
                     
-                    // Right: Mixer Button
                     Button(action: {
                         showMixer = true
                     }) {
@@ -45,7 +38,7 @@ struct MainView: View {
                     }
                     .sheet(isPresented: $showMixer) {
                         MixerView()
-                            .presentationDetents([.medium, .large])
+                            .presentationDetents([.large])
                             .presentationDragIndicator(.visible)
                     }
                 }
@@ -103,9 +96,6 @@ struct MainView: View {
                 
                 // Controls
                 HStack(spacing: 40) {
-                    // Removed Rewind Button
-                    
-                    // Centered Play Button
                     Button(action: {
                         if audioController.isPlaying {
                             audioController.stop()
@@ -123,15 +113,11 @@ struct MainView: View {
                                 .foregroundColor(Color(hex: Theme.Colors.backgroundDark))
                         }
                     }
-                    
-                    // Removed old Filter Button location (now empty/spacer if needed, or just center play)
                 }
                 .padding(.bottom, 60) // Extra padding since tab bar is gone
-                
-                // Removed Tab Bar
             }
         }
-                .onChange(of: selectedTab) { newState in
+        .onChange(of: selectedTab) { oldState, newState in
              // Trigger Haptics
              let generator = UIImpactFeedbackGenerator(style: .light)
              generator.impactOccurred()

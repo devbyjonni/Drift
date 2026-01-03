@@ -10,14 +10,12 @@ struct BackgroundView: View {
         case .theta:
             return [Color(hex: Theme.Colors.backgroundDark), Color(hex: Theme.Colors.thetaGradientMiddle), Color(hex: Theme.Colors.backgroundDark)]
         case .alpha:
-            // Entering Space: Deep Blue/Indigo
             return [
                 Color(hex: Theme.Colors.spaceDark),
                 Color(hex: Theme.Colors.spaceBlue),
                 Color(hex: Theme.Colors.spaceDark)
             ]
         case .beta:
-            // Deep Space: Void with Nebula Purple accents
             return [
                 Color(hex: Theme.Colors.spaceDark),
                 Color(hex: Theme.Colors.nebulaPurple).opacity(0.3),
