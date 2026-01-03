@@ -20,8 +20,9 @@ struct MixerView: View {
                             .tracking(2)
                             .foregroundColor(Color(hex: Theme.Colors.textLight).opacity(0.9))
                         
-                        // Chevron to left (actually just dismiss zone)
+                        // Controls Container
                         HStack {
+                            // Dismiss Button
                             Button(action: { dismiss() }) {
                                 Image(systemName: "chevron.down")
                                     .font(.system(size: 20, weight: .light))
@@ -30,6 +31,7 @@ struct MixerView: View {
                             
                             Spacer()
                             
+                            // Reset Button
                             Button(action: {
                                 withAnimation {
                                     audioController.rainVolume = 0
@@ -49,10 +51,11 @@ struct MixerView: View {
                 .padding(.top, 10)
                 .background(Color(hex: Theme.Colors.surfaceDark).opacity(0.5))
                 
+                // Scrollable Content
                 ScrollView {
                     VStack(spacing: 1) {
                         
-                        // Section 1: Nature Elements
+                        // --- Nature Section ---
                         SectionHeader(icon: "cloud.rain", title: "Nature Elements")
                         
                         MixerSlider(
@@ -63,9 +66,11 @@ struct MixerView: View {
                             color: Color(hex: Theme.Colors.textLight)
                         )
                         
-                        Divider().background(Color.white.opacity(0.05)).padding(.horizontal, 24).padding(.vertical, 8)
+                        Divider().background(Color.white.opacity(0.05))
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 8)
                         
-                        // Section 2: Noise Colors
+                        // --- Noise Section ---
                         SectionHeader(icon: "waveform.path", title: "Noise Colors")
                         
                         MixerSlider(
@@ -76,9 +81,11 @@ struct MixerView: View {
                             color: Color(hex: Theme.Colors.textLight)
                         )
                         
-                        Divider().background(Color.white.opacity(0.05)).padding(.horizontal, 24).padding(.vertical, 8)
+                        Divider().background(Color.white.opacity(0.05))
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 8)
 
-                        // Section 3: Master
+                        // --- Master Section ---
                         SectionHeader(icon: "speaker.wave.3", title: "Master")
                         
                         MixerSlider(
@@ -118,7 +125,9 @@ struct MixerView: View {
     }
 }
 
-struct SectionHeader: View {
+// MARK: - Subviews
+
+fileprivate struct SectionHeader: View {
     let icon: String
     let title: String
     
@@ -138,7 +147,7 @@ struct SectionHeader: View {
     }
 }
 
-struct MixerSlider: View {
+fileprivate struct MixerSlider: View {
     let title: String
     let subtitle: String
     let icon: String
@@ -149,6 +158,7 @@ struct MixerSlider: View {
     var body: some View {
         VStack(spacing: 16) {
             HStack(spacing: 16) {
+                // Icon
                 ZStack {
                     Circle()
                         .fill(Color.white.opacity(0.05))
@@ -159,6 +169,7 @@ struct MixerSlider: View {
                         .foregroundColor(value > 0 ? Color(hex: Theme.Colors.textLight) : Color(hex: Theme.Colors.textMuted))
                 }
                 
+                // Labels
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .regular))
@@ -170,6 +181,7 @@ struct MixerSlider: View {
                 
                 Spacer()
                 
+                // Percentage Value
                 Text("\(Int(value * 100))%")
                     .font(.system(size: 14, weight: .medium, design: .monospaced))
                     .foregroundColor(value > 0 ? color : Color(hex: Theme.Colors.textMuted).opacity(0.5))
@@ -179,28 +191,29 @@ struct MixerSlider: View {
             // Custom Slider Component
             GeometryReader { geo in
                 let width = geo.size.width
+                let thumbSize: CGFloat = 16
                 
                 ZStack(alignment: .leading) {
-                    // Track
+                    // Track Background
                     Capsule()
                         .fill(Color.white.opacity(0.1))
                         .frame(height: 2)
                     
-                    // Fill
+                    // Active Fill
                     Capsule()
                         .fill(color.opacity(value > 0 ? 0.8 : 0.0))
-                        .frame(width: width * CGFloat(value), height: 2)
+                        .frame(width: max(0, width * CGFloat(value)), height: 2)
                     
-                    // Thumb
+                    // Thumb Handle
                     Circle()
                         .fill(color)
-                        .frame(width: 16, height: 16)
+                        .frame(width: thumbSize, height: thumbSize)
                         .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                        .offset(x: (width * CGFloat(value)) - 8)
+                        .offset(x: (width * CGFloat(value)) - (thumbSize / 2))
                         .gesture(
                             DragGesture()
-                                .onChanged { value in
-                                    let percentage = min(max(0, value.location.x / width), 1)
+                                .onChanged { output in
+                                    let percentage = min(max(0, output.location.x / width), 1)
                                     self.value = Float(percentage)
                                 }
                         )
