@@ -22,6 +22,8 @@ struct MainView: View {
                 
                 frequencyTabView
                 
+                pageIndicator
+                
                 waveVisualization
                 
                 Spacer()
@@ -107,27 +109,24 @@ struct MainView: View {
         .animation(.easeInOut(duration: 1.5), value: audioController.isPlaying)
     }
     
-    private var playButton: some View {
-        HStack(spacing: 40) {
-            Button(action: {
-                if audioController.isPlaying {
-                    audioController.stop()
-                } else {
-                    audioController.start()
-                }
-            }) {
-                ZStack {
-                    Circle()
-                        .fill(Color(hex: Theme.Colors.textLight))
-                        .frame(width: 80, height: 80)
-                    
-                    Image(systemName: audioController.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.largeTitle)
-                        .foregroundColor(Color(hex: Theme.Colors.backgroundDark))
-                }
             }
         }
         .padding(.bottom, 60)
+    }
+    
+    private var pageIndicator: some View {
+        HStack(spacing: 8) {
+            ForEach(BrainwaveState.allCases) { state in
+                Circle()
+                    .fill(state == selectedTab ? Color(hex: Theme.Colors.textLight) : Color(hex: Theme.Colors.textMuted).opacity(0.3))
+                    .frame(width: 8, height: 8)
+                    .scaleEffect(state == selectedTab ? 1.2 : 1.0)
+                    .animation(.spring(), value: selectedTab)
+            }
+        }
+        // Fade out when playing (since swiping is disabled)
+        .opacity(audioController.isPlaying ? 0.3 : 1.0)
+        .padding(.bottom, 10)
     }
     
     // MARK: - Logic
