@@ -3,12 +3,30 @@ import SwiftUI
 struct BackgroundView: View {
     let mode: BrainwaveState
     
-    var gradientColors: [Color] {
+    var body: some View {
+        LinearGradient(
+            colors: gradientColors,
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+    }
+    
+    // MARK: - Gradient Logic
+    private var gradientColors: [Color] {
         switch mode {
         case .delta:
-            return [Color(hex: Theme.Colors.backgroundDark), Color(hex: Theme.Colors.deltaGradientMiddle), Color(hex: Theme.Colors.backgroundDark)]
+            return [
+                Color(hex: Theme.Colors.backgroundDark),
+                Color(hex: Theme.Colors.deltaGradientMiddle),
+                Color(hex: Theme.Colors.backgroundDark)
+            ]
         case .theta:
-            return [Color(hex: Theme.Colors.backgroundDark), Color(hex: Theme.Colors.thetaGradientMiddle), Color(hex: Theme.Colors.backgroundDark)]
+            return [
+                Color(hex: Theme.Colors.backgroundDark),
+                Color(hex: Theme.Colors.thetaGradientMiddle),
+                Color(hex: Theme.Colors.backgroundDark)
+            ]
         case .alpha:
             return [
                 Color(hex: Theme.Colors.spaceDark),
@@ -23,18 +41,15 @@ struct BackgroundView: View {
             ]
         }
     }
-    
-    var body: some View {
-        LinearGradient(colors: gradientColors, startPoint: .topLeading, endPoint: .bottomTrailing)
-            .ignoresSafeArea()
-    }
 }
+
+// MARK: - Brainwave State Model
 
 enum BrainwaveState: String, CaseIterable, Identifiable {
     case delta = "Delta"
     case theta = "Theta"
     case alpha = "Alpha"
-    case beta = "Beta"
+    case beta  = "Beta"
     
     var id: String { rawValue }
     
@@ -51,21 +66,22 @@ enum BrainwaveState: String, CaseIterable, Identifiable {
         return String(format: "%.1f Hz", centerFrequency)
     }
     
+    var description: String {
+        switch self {
+        case .delta: return "Deep Sleep"
+        case .theta: return "Deep Meditation"
+        case .alpha: return "Relaxation"
+        case .beta:  return "Focus & Alertness"
+        }
+    }
+    
+    // Unused but good for documentation/future use
     var rangeDescription: String {
         switch self {
         case .delta: return "0.5 - 4 Hz"
         case .theta: return "4 - 8 Hz"
         case .alpha: return "8 - 12 Hz"
         case .beta:  return "12 - 30 Hz"
-        }
-    }
-    
-    var description: String {
-        switch self {
-        case .delta: return "Deep Sleep"
-        case .theta: return "Deep Meditation"
-        case .alpha: return "Relaxation"
-        case .beta: return "Focus & Alertness"
         }
     }
 }
