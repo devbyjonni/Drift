@@ -1,8 +1,9 @@
 import Foundation
 import AVFoundation
-import Combine
+import Observation
 
-class AudioController: ObservableObject {
+@Observable
+class AudioController {
     static let shared = AudioController()
     
     // Engine & Nodes
@@ -19,17 +20,17 @@ class AudioController: ObservableObject {
     private let whiteNoiseMixer = AVAudioMixerNode()
     
     // State
-    @Published var isPlaying: Bool = false
-    @Published var frequency: Float = 6.0
+    var isPlaying: Bool = false
+    var frequency: Float = 6.0
     
     // Volume State (0.0 - 1.0)
-    @Published var masterVolume: Float = 1.0 {
+    var masterVolume: Float = 1.0 {
         didSet { updateVolumes() }
     }
-    @Published var rainVolume: Float = 0.0 {
+    var rainVolume: Float = 0.0 {
         didSet { updateVolumes() }
     }
-    @Published var whiteNoiseVolume: Float = 0.0 {
+    var whiteNoiseVolume: Float = 0.0 {
         didSet { updateVolumes() }
     }
     

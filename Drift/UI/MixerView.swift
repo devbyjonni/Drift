@@ -2,9 +2,11 @@ import SwiftUI
 
 struct MixerView: View {
     @Environment(\.dismiss) var dismiss
-    @StateObject var audioController = AudioController.shared
+    var audioController = AudioController.shared
     
     var body: some View {
+        @Bindable var bindableController = audioController
+        
         ZStack {
             Color(hex: Theme.Colors.backgroundDark).ignoresSafeArea()
             
@@ -57,7 +59,7 @@ struct MixerView: View {
                             title: "Rain",
                             subtitle: "Heavy Downpour",
                             icon: "cloud.rain.fill",
-                            value: $audioController.rainVolume,
+                            value: $bindableController.rainVolume,
                             color: Color(hex: Theme.Colors.textLight)
                         )
                         
@@ -70,7 +72,7 @@ struct MixerView: View {
                             title: "White Noise",
                             subtitle: "Static Block",
                             icon: "aqi.medium",
-                            value: $audioController.whiteNoiseVolume,
+                            value: $bindableController.whiteNoiseVolume,
                             color: Color(hex: Theme.Colors.textLight)
                         )
                         
@@ -83,7 +85,7 @@ struct MixerView: View {
                             title: "Master Volume",
                             subtitle: "Global Level",
                             icon: "speaker.wave.3.fill",
-                            value: $audioController.masterVolume,
+                            value: $bindableController.masterVolume,
                             color: Color(hex: Theme.Colors.primary),
                             defaultValue: 1.0
                         )

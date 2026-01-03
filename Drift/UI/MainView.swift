@@ -2,7 +2,7 @@ import SwiftUI
 
 struct MainView: View {
     @State private var selectedTab: BrainwaveState = .theta
-    @StateObject private var audioController = AudioController.shared
+    @State private var audioController = AudioController.shared
     @State private var showMixer: Bool = false
     
     // UI State for animations
