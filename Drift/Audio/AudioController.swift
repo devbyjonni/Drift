@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import Observation
 
+
 /// The central audio engine for Drift.
 ///
 /// This controller manages:
@@ -270,7 +271,9 @@ class AudioController {
             try engine.start()
             isPlaying = true
             
-            // 2. Global Fade In
+
+            
+            // 3. Global Fade In
             // Fade MainMixer from 0 -> MasterVolume
             fade(node: mainMixer, target: masterVolume, duration: 2.0)
         } catch {
@@ -280,6 +283,9 @@ class AudioController {
     
     func stop() {
         isPlaying = false
+        
+
+        
         // 3. Global Fade Out
         fade(node: mainMixer, target: 0.0, duration: 1.0) { [weak self] in
             self?.engine.stop()

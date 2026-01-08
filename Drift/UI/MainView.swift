@@ -37,6 +37,13 @@ struct MainView: View {
         .onAppear {
              audioController.setFrequency(selectedTab.centerFrequency)
         }
+        .onChange(of: audioController.isPlaying) { _, isPlaying in
+            print(isPlaying)
+            // Prevent screen lock while playing
+            #if os(iOS)
+            UIApplication.shared.isIdleTimerDisabled = isPlaying
+            #endif
+        }
     }
     
     // MARK: - Subviews
