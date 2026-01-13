@@ -8,8 +8,6 @@ Drift is a native iOS application that generates **Binaural Beats** and procedur
 
 ## 🛠 Engineering Highlights
 
-This project showcases advanced iOS development capabilities, moving beyond standard UI/CRUD applications into low-level audio processing and high-performance graphics.
-
 ### 1. Real-Time Digital Signal Processing (DSP)
 - **Zero Samples**: No audio files are used for the main tones. All sound is mathematically generated.
 - **C-Interop**: Utilizes `UnsafeMutablePointer` and C-based audio rendering callbacks (`AVAudioSourceNodeRenderBlock`) for lock-free, high-performance audio generation on the real-time thread.
