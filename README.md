@@ -4,6 +4,10 @@
 
 Drift is a native iOS application that generates **Binaural Beats** and procedural atmospheric soundscapes in real-time. Unlike typical meditation apps that play pre-recorded MP3s, Drift synthesizes audio samples on the fly using `AVAudioSourceNode`, ensuring zero looping artifacts and minimal memory footprint.
 
+<p align="center">
+  <img src="assets/showcase.png" alt="Drift App Showcase" width="2000" height="1000">
+</p>
+
 ---
 
 ## 🛠 Engineering Highlights
