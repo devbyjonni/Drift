@@ -14,12 +14,12 @@ Drift is a native iOS application that generates **Binaural Beats** and procedur
 
 ### 1. Real-Time Digital Signal Processing (DSP)
 - **Zero Samples**: No audio files are used for the main tones. All sound is mathematically generated.
-- **C-Interop**: Utilizes `UnsafeMutablePointer` and C-based audio rendering callbacks (`AVAudioSourceNodeRenderBlock`) for lock-free, high-performance audio generation on the real-time thread.
+- **Real-Time Render Isolation**: Uses `AVAudioSourceNode` render callbacks created outside MainActor isolation so Core Audio can execute them safely on the high-priority IO thread.
 - **Procedural Noise**: Implements a **Linear Congruential Generator (LCG)** to synthesize Brown and White noise procedurally, completely eliminating large audio assets.
 
 ### 2. Modern Swift 6 Concurrency
 - **Observation Framework**: Migrated from `Combine`/`ObservableObject` to the new Swift 6 `@Observable` macro for performant, fine-grained state tracking.
-- **Thread Safety**: strict isolation between the UI (Main Actor) and the high-priority Audio Thread.
+- **Thread Safety**: Strict isolation between the UI (`MainActor`) and nonisolated audio render state prevents Swift 6 queue assertions during playback.
 
 ### 3. High-Performance SwiftUI
 - **Canvas Drawing**: The Wave visualization uses immediate-mode `Canvas` drawing rather than `Shape` paths for optimal performance.
@@ -35,7 +35,7 @@ Drift is a native iOS application that generates **Binaural Beats** and procedur
 - **Audio**: `AVAudioEngine`, `AVAudioSourceNode`, `AVAudioMixerNode`
 - **State Management**: Swift Observation framework (`@Observable`, `@Bindable`)
 - **Architecture**: MVVM + Singleton Audio Controller
-- **Tools**: Xcode 16, Git
+- **Tools**: Xcode 17, Git
 
 ---
 
@@ -65,6 +65,8 @@ sourceNode = AVAudioSourceNode { _, _, frameCount, _ -> OSStatus in
 ```
 
 This approach allows for instantaneous frequency shifting and "glitch-free" transitions between different brainwave states.
+
+In Swift 6, Drift keeps the observable `AudioController` on `MainActor` while constructing the source node render callbacks in nonisolated factory methods. This avoids binding Core Audio's real-time render blocks to the main queue and keeps playback compatible with strict actor isolation.
 
 ---
 
