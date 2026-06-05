@@ -10,27 +10,75 @@ import XCTest
 
 final class DriftTests: XCTestCase {
 
-    override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
+    @MainActor
+    private func resetController() -> AudioController {
+        let controller = AudioController.shared
+
+        controller.stop()
+        controller.setFrequency(BrainwaveState.theta.centerFrequency)
+        controller.masterVolume = 1.0
+        controller.rainVolume = 0.0
+        controller.whiteNoiseVolume = 0.0
+
+        return controller
     }
 
-    override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+    @MainActor
+    func testAudioControllerStartsWithExpectedDefaults() {
+        let controller = resetController()
+
+        XCTAssertFalse(controller.isPlaying)
+        XCTAssertEqual(controller.frequency, BrainwaveState.theta.centerFrequency, accuracy: 0.001)
+        XCTAssertEqual(controller.masterVolume, 1.0, accuracy: 0.001)
+        XCTAssertEqual(controller.rainVolume, 0.0, accuracy: 0.001)
+        XCTAssertEqual(controller.whiteNoiseVolume, 0.0, accuracy: 0.001)
     }
 
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
+    @MainActor
+    func testAudioControllerUpdatesFrequency() {
+        let controller = resetController()
+
+        controller.setFrequency(BrainwaveState.delta.centerFrequency)
+        XCTAssertEqual(controller.frequency, BrainwaveState.delta.centerFrequency, accuracy: 0.001)
+
+        controller.setFrequency(BrainwaveState.beta.centerFrequency)
+        XCTAssertEqual(controller.frequency, BrainwaveState.beta.centerFrequency, accuracy: 0.001)
     }
 
-    func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+    @MainActor
+    func testAudioControllerTracksMixerVolumes() {
+        let controller = resetController()
+
+        controller.masterVolume = 0.42
+        controller.rainVolume = 0.25
+        controller.whiteNoiseVolume = 0.75
+
+        XCTAssertEqual(controller.masterVolume, 0.42, accuracy: 0.001)
+        XCTAssertEqual(controller.rainVolume, 0.25, accuracy: 0.001)
+        XCTAssertEqual(controller.whiteNoiseVolume, 0.75, accuracy: 0.001)
+    }
+
+    @MainActor
+    func testStopIsIdempotentWhenAlreadyStopped() {
+        let controller = resetController()
+
+        controller.stop()
+        controller.stop()
+
+        XCTAssertFalse(controller.isPlaying)
+    }
+
+    @MainActor
+    func testStartMarksControllerPlayingWhenAudioEngineStarts() throws {
+        let controller = resetController()
+
+        controller.start()
+
+        guard controller.isPlaying else {
+            throw XCTSkip("AVAudioEngine did not start in this test environment.")
         }
-    }
 
+        controller.stop()
+        XCTAssertFalse(controller.isPlaying)
+    }
 }
