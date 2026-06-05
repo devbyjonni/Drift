@@ -36,7 +36,7 @@ struct MixerView: View {
                                 withAnimation {
                                     audioController.rainVolume = 0
                                     audioController.whiteNoiseVolume = 0
-                                    audioController.masterVolume = 1.0
+                                    audioController.masterVolume = 0.5
                                 }
                             }) {
                                 Text("RESET")
@@ -94,7 +94,7 @@ struct MixerView: View {
                             icon: "speaker.wave.3.fill",
                             value: $bindableController.masterVolume,
                             color: Color(hex: Theme.Colors.primary),
-                            defaultValue: 1.0
+                            defaultValue: 0.5
                         )
                     }
                     .padding(.top, 20)

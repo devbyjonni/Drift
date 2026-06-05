@@ -31,6 +31,7 @@ struct Theme {
         // specific colors for the dynamic background gradients per state
         static let deltaGradientMiddle = "#2c2a26"
         static let thetaGradientMiddle = "#3d3a36"
+        static let betaGradientMiddle = "#241445"
         
         // MARK: - Space Theme (Visuals)
         static let spaceDark = "#0f1219"     // Deep Void

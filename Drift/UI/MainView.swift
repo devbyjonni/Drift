@@ -34,9 +34,6 @@ struct MainView: View {
         .onChange(of: selectedTab) { _, newState in
              handleTabChange(to: newState)
         }
-        .onAppear {
-             audioController.setFrequency(selectedTab.centerFrequency)
-        }
         .onChange(of: audioController.isPlaying) { _, isPlaying in
             print(isPlaying)
             // Prevent screen lock while playing

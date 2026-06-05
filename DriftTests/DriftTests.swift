@@ -16,7 +16,7 @@ final class DriftTests: XCTestCase {
 
         controller.stop()
         controller.setFrequency(BrainwaveState.theta.centerFrequency)
-        controller.masterVolume = 1.0
+        controller.masterVolume = 0.5
         controller.rainVolume = 0.0
         controller.whiteNoiseVolume = 0.0
 
@@ -29,7 +29,7 @@ final class DriftTests: XCTestCase {
 
         XCTAssertFalse(controller.isPlaying)
         XCTAssertEqual(controller.frequency, BrainwaveState.theta.centerFrequency, accuracy: 0.001)
-        XCTAssertEqual(controller.masterVolume, 1.0, accuracy: 0.001)
+        XCTAssertEqual(controller.masterVolume, 0.5, accuracy: 0.001)
         XCTAssertEqual(controller.rainVolume, 0.0, accuracy: 0.001)
         XCTAssertEqual(controller.whiteNoiseVolume, 0.0, accuracy: 0.001)
     }

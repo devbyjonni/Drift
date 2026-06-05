@@ -36,7 +36,8 @@ struct BackgroundView: View {
         case .beta:
             return [
                 Color(hex: Theme.Colors.spaceDark),
-                Color(hex: Theme.Colors.nebulaPurple).opacity(0.3),
+                // Keep Beta vivid without making the whole background too bright.
+                Color(hex: Theme.Colors.betaGradientMiddle).opacity(0.8),
                 Color(hex: Theme.Colors.spaceDark)
             ]
         }

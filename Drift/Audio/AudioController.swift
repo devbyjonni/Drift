@@ -27,6 +27,11 @@ private nonisolated final class RenderValue: @unchecked Sendable {
 private nonisolated final class OscillatorPhase: @unchecked Sendable {
     var left: Float = 0.0
     var right: Float = 0.0
+
+    func reset() {
+        left = 0.0
+        right = 0.0
+    }
 }
 
 private nonisolated final class NoiseState: @unchecked Sendable {
@@ -82,7 +87,7 @@ class AudioController {
     var frequency: Float = 6.0
 
     /// Global app volume (0.0 - 1.0).
-    var masterVolume: Float = 1.0 {
+    var masterVolume: Float = 0.5 {
         didSet { updateVolumes() }
     }
 
@@ -97,9 +102,6 @@ class AudioController {
     }
 
     // MARK: - Internal Audio State
-    private var lfoPhase: Float = 0.0
-    private let lfoRate: Float = 0.1 // Hz (Slow panning speed)
-    private var lfoTask: Task<Void, Never>? // For LFO updates
     private var fadeTask: Task<Void, Never>? // For volume fades
     private var playbackState: PlaybackState = .stopped
 
@@ -127,17 +129,18 @@ class AudioController {
         }
         #endif
 
+        let format = makeEngineFormat()
+
         // 2. Create the Binaural Source Node
-        // This block runs thousands of times per second (at 44.1kHz).
-        // It generates the raw sine wave samples.
+        // This block runs thousands of times per second and generates raw sine samples.
         sourceNode = Self.makeToneNode(
             frequencyValue: frequencyValue,
             carrierValue: carrierValue,
-            phase: phase
+            phase: phase,
+            sampleRate: format.sampleRate
         )
 
         // 4. Connect Tone Nodes
-        let format = AVAudioFormat(standardFormatWithSampleRate: 44100.0, channels: 2)!
         engine.attach(sourceNode)
         engine.attach(panningMixer)
         engine.connect(sourceNode, to: panningMixer, format: format)
@@ -147,9 +150,20 @@ class AudioController {
         setupAtmosphere(format: format)
 
         // 6. Start Subsystems
-        startLFO() // Begin panning timer
         engine.prepare()
         updateVolumes()
+        prewarmAudioEngine()
+    }
+
+    private func makeEngineFormat() -> AVAudioFormat {
+        #if os(iOS)
+        let sessionSampleRate = AVAudioSession.sharedInstance().sampleRate
+        let sampleRate = sessionSampleRate > 0 ? sessionSampleRate : 44100.0
+        #else
+        let sampleRate = mainMixer.outputFormat(forBus: 0).sampleRate
+        #endif
+
+        return AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2)!
     }
 
     private func setupAtmosphere(format: AVAudioFormat) {
@@ -177,14 +191,14 @@ class AudioController {
     private nonisolated static func makeToneNode(
         frequencyValue: RenderValue,
         carrierValue: RenderValue,
-        phase: OscillatorPhase
+        phase: OscillatorPhase,
+        sampleRate: Double
     ) -> AVAudioSourceNode {
-        AVAudioSourceNode { [frequencyValue, carrierValue, phase] _, _, frameCount, audioBufferList -> OSStatus in
+        AVAudioSourceNode { [frequencyValue, carrierValue, phase, sampleRate] _, _, frameCount, audioBufferList -> OSStatus in
             let abl = UnsafeMutableAudioBufferListPointer(audioBufferList)
 
             let entrainmentHz = frequencyValue.value
             let carrierHz = carrierValue.value
-            let sampleRate = 44100.0
             let twoPi = 2.0 * Float.pi
 
             let incL = (carrierHz * twoPi) / Float(sampleRate)
@@ -265,20 +279,45 @@ class AudioController {
 
     /// Updates the binaural beat frequency (e.g., 6Hz for Theta).
     func setFrequency(_ hz: Float) {
+        guard abs(frequency - hz) > 0.001 else { return }
+
         frequencyValue.value = hz
         self.frequency = hz
     }
 
     private func updateVolumes() {
-        mainMixer.outputVolume = masterVolume
+        if playbackState == .stopped || playbackState == .stopping {
+            mainMixer.outputVolume = 0
+        } else {
+            mainMixer.outputVolume = masterVolume
+        }
+
         rainMixer.outputVolume = rainVolume
         whiteNoiseMixer.outputVolume = whiteNoiseVolume
+    }
+
+    private func prewarmAudioEngine() {
+        mainMixer.outputVolume = 0
+        panningMixer.outputVolume = 1.0
+        panningMixer.pan = 0.0
+        phase.reset()
+
+        do {
+            // Start muted so iOS can wake the audio route before the first audible fade-in.
+            try engine.start()
+        } catch {
+            print("Error prewarming engine: \(error)")
+        }
     }
 
     func start() {
         fadeTask?.cancel()
 
         if engine.isRunning {
+            mainMixer.outputVolume = 0
+            panningMixer.outputVolume = 1.0
+            panningMixer.pan = 0.0
+            phase.reset()
             playbackState = .playing
             isPlaying = true
             fade(node: mainMixer, target: masterVolume, duration: 0.4)
@@ -290,10 +329,12 @@ class AudioController {
 
         // Ensure subsystems are ready (but silent due to mainMixer)
         panningMixer.outputVolume = 1.0
+        panningMixer.pan = 0.0
         updateVolumes() // Sets Rain/Noise to their slider levels
 
         // Start silent
         mainMixer.outputVolume = 0
+        phase.reset()
 
         do {
             try engine.start()
@@ -322,8 +363,7 @@ class AudioController {
         // 3. Global Fade Out
         fade(node: mainMixer, target: 0.0, duration: 1.0) { [weak self] in
             guard let self, self.playbackState == .stopping else { return }
-            self.engine.stop()
-            self.engine.reset()
+            self.mainMixer.outputVolume = 0
             self.playbackState = .stopped
         }
     }
@@ -331,7 +371,12 @@ class AudioController {
     // MARK: - Helpers
 
     /// Animates the volume of a node linearly.
-    private func fade(node: AVAudioMixerNode, target: Float, duration: TimeInterval, completion: (@MainActor @Sendable () -> Void)? = nil) {
+    private func fade(
+        node: AVAudioMixerNode,
+        target: Float,
+        duration: TimeInterval,
+        completion: (@MainActor @Sendable () -> Void)? = nil
+    ) {
         fadeTask?.cancel()
 
         let startVolume = node.outputVolume
@@ -351,26 +396,6 @@ class AudioController {
 
             node.outputVolume = target
             completion?()
-        }
-    }
-
-    /// Starts the Low Frequency Oscillator (LFO) for Panning.
-    /// This slowly moves the sound between Left and Right ears.
-    private func startLFO() {
-        lfoTask?.cancel()
-        lfoTask = Task { @MainActor [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1.0 / 60.0))
-
-                guard let self, self.isPlaying else { continue }
-
-                self.lfoPhase += self.lfoRate / 60.0
-                if self.lfoPhase > .pi * 2 { self.lfoPhase -= .pi * 2 }
-
-                // Pan calculates sine wave from -0.8 to 0.8
-                let panPosition = sin(self.lfoPhase) * 0.8
-                self.panningMixer.pan = panPosition
-            }
         }
     }
 }
